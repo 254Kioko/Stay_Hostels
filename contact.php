@@ -1,18 +1,58 @@
 <?php
-if(isset($_POST['submit'])) {
-    $name = $_POST['name'];
-    $number = $_POST['number'];
-    $email = $_POST['email'];
-    $gender = $_POST['gender'];
-    $to = "stayhostels@gmail.com";
-    $subject = "New Booking Request";
-    $message = "Name: ".$name."\n"."Number: ".$number."\n"."Email: ".$email."\n"."Gender: ".$gender;
-    $headers = "From: ".$email;
-    if(mail($to, $subject, $message, $headers)) {
-        echo "Your booking has been sent successfully!";
-    } else {
-        echo "Sorry, your message could not be sent at this time.";
-    }
+// define variables and set to empty values
+$name = $phone = $email = $gender = "";
+
+// check if the form has been submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  $name = test_input($_POST["name"]);
+  $phone = test_input($_POST["phone"]);
+  $email = test_input($_POST["email"]);
+  $gender = test_input($_POST["gender"]);
+
+  // send email
+  $to = "stayhostels@gmail.com";
+  $subject = "New booking submission";
+  $message = "Name: $name\nPhone: $phone\nEmail: $email\nGender: $gender";
+  $headers = "From: stayhostels@gmail.com";
+
+  mail($to,$subject,$message,$headers);
+
+  // insert data into database
+  $servername = "localhost";
+  $username = "username";
+  $password = "password";
+  $dbname = "STAY HOSTELS";
+
+  // create connection
+  $conn = new mysqli($servername, $username, $password, $dbname);
+
+  // check connection
+  if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+  }
+
+  // prepare and bind statement
+  $stmt = $conn->prepare("INSERT INTO myTable (name, phone, email, gender) VALUES (?, ?, ?, ?)");
+  $stmt->bind_param("ssss", $name, $phone, $email, $gender);
+
+  // execute statement
+  $stmt->execute();
+
+  // close statement and connection
+  $stmt->close();
+  $conn->close();
+
+  // redirect to thank you page
+  header("Location: thankyou.html");
+  exit();
+}
+
+// function to test input values
+function test_input($data) {
+  $data = trim($data);
+  $data = stripslashes($data);
+  $data = htmlspecialchars($data);
+  return $data;
 }
 ?>
 
